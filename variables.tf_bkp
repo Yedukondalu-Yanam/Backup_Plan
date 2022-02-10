@@ -1,0 +1,13 @@
+# PER ENVIROMENT VARIABLES
+variable "aws_region" {
+  default = "us-east-1"
+}
+
+variable "aws_profile" {
+  default = ""
+}
+
+variable "aws_creds_file" {
+  description = "Path to aws cli credentials file"
+  default     = ""
+}

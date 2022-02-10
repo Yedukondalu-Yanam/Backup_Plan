@@ -1,0 +1,85 @@
+###############################################################################
+provider "aws" {
+  region                  = var.aws_region
+  shared_credentials_file = var.aws_creds_file
+  profile                 = var.aws_profile
+}
+
+resource "aws_backup_vault" "example" {
+  name        = "example_backup_vault" 
+}
+
+
+resource "aws_backup_plan" "example" {
+  name = "tf_example_backup_plan"
+
+  rule {
+    rule_name         = "tf_example_backup_rule"
+    target_vault_name = aws_backup_vault.example.name
+    schedule          = "cron(0 12 * * ? *)"
+  }
+}
+
+resource "aws_iam_role" "example" {
+  name               = "example"
+  assume_role_policy = <<POLICY
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Action": ["sts:AssumeRole"],
+      "Effect": "allow",
+      "Principal": {
+        "Service": ["backup.amazonaws.com"]
+      }
+    }
+  ]
+}
+POLICY
+}
+
+resource "aws_iam_role_policy_attachment" "example" {
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSBackupServiceRolePolicyForBackup"
+  role       = aws_iam_role.example.name
+}
+
+
+
+resource "aws_backup_selection" "example_ec2" { 
+  iam_role_arn = aws_iam_role.example.arn
+  name         = "tf_example_backup_selection_ec2"
+  plan_id      = aws_backup_plan.example.id
+
+  selection_tag {
+    type  = "STRINGEQUALS"
+    key   = "Name"
+    value = "VALUE"
+  }
+}
+
+resource "aws_backup_selection" "example_rds" {
+  iam_role_arn = aws_iam_role.example.arn
+  name         = "tf_example_backup_selection_rds"
+  plan_id      = aws_backup_plan.example.id
+
+  resources = ["arn:aws:rds:us-east-1:230750864755:cluster:database-1"]
+}
+
+
+
+resource "aws_backup_selection" "example_vpc" {
+  iam_role_arn = aws_iam_role.example.arn
+  name         = "tf_example_backup_selection_vpc"
+  plan_id      = aws_backup_plan.example.id
+
+
+selection_tag {
+    type  = "STRINGEQUALS"
+    key   = "Name"
+    value = "VALUE"
+  }
+}
+
+
+
+
